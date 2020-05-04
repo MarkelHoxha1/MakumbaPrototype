@@ -3,10 +3,10 @@ class Query{
          this.q = string;
         } 
     where(string){ 
-        queries[globalIndex + 1] = {
+        queries[globalIndex] = {
             projections: [],
             querySections: [this.q, string, null, null, null, null, null],
-            parentIndex: globalIndex,
+            parentIndex: globalIndex - 1,
             limit: -1,
             offset: 0,
           }
@@ -14,18 +14,15 @@ class Query{
         return  new Query(this.q + string);
     }
     map(func){
-        globalIndex++;
-        let val = func(null);
-        globalIndex --;  // dry run
-        queries[globalIndex + 1].projections = Object.values(val).filter(item => item);
-        if(globalIndex == -1)
-            return new Query("");
-	 }
+      func(closure, -1);
+      return new Query("");
+   }
+    
     groupBy(string){ 
-        queries[globalIndex + 1] = {
+        queries[globalIndex] = {
             projections: [],
             querySections: [this.q, whereQuery, string, null, null, null, null],
-            parentIndex: globalIndex,
+            parentIndex: globalIndex - 1,
             limit: -1,
             offset: 0,
           }
@@ -33,10 +30,10 @@ class Query{
         return  new Query(this.q +string);
     }
     orderBy(string){ 
-        queries[globalIndex + 1] = {
+        queries[globalIndex] = {
             projections: [],
             querySections: [this.q, whereQuery, groupByQuery, string, null, null, null],
-            parentIndex: globalIndex,
+            parentIndex: globalIndex - 1,
             limit: -1,
             offset: 0,
           }
@@ -57,6 +54,10 @@ class Query{
     }
 }
 
+function closure(value){
+  queries[globalIndex].projections.push(value);
+}
+
 function from(string){
     queries[globalIndex + 1] = {
         projections: [],
@@ -65,6 +66,7 @@ function from(string){
         limit: -1,
         offset: 0,
       }
+      globalIndex ++;
     return new Query(string);
 }
 
