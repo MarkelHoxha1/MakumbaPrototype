@@ -11,11 +11,15 @@ class Query{
             offset: 0,
           }
           whereQuery = string;
-        return  new Query(this.q + string);
+        return new Query(this.q + string);
     }
+
     map(func){
-      func(closure, -1);
-      return new Query("");
+      //return new Promise((resolve) => {
+          var returnValue = func(closure, -1);
+          console.log(returnValue);
+          //resolve(queries);
+     // });
    }
     
     groupBy(string){ 
@@ -40,22 +44,32 @@ class Query{
           orderByQuery = string;
         return  new Query(this.q +string);
     }
-    runQueries(){
-        console.log(queries);
-        fetch("https://brfenergi.se/task-planner/MakumbaQueryServlet", {
-          method: "POST",
-          credentials: 'include',
-          body: "request=" + encodeURIComponent(JSON.stringify({ queries: queries })) + "&analyzeOnly=false"
-        }).then(response =>  response.json())
-          .then(data => {
-            console.log(data);
-          })
-          .catch(e => console.error(e))
-    }
+
+}
+
+function getResults(queries){
+  return runQueries(queries);
 }
 
 function closure(value){
+  console.log(value);
   queries[globalIndex].projections.push(value);
+  return getResults(queries);
+  //return { val: value, index: globalIndex };
+}
+
+function runQueries(queriesCreated){
+  console.log(queriesCreated);
+  fetch("https://brfenergi.se/task-planner/MakumbaQueryServlet", {
+    method: "POST",
+    credentials: 'include',
+    body: "request=" + encodeURIComponent(JSON.stringify({ queries: queriesCreated })) + "&analyzeOnly=false"
+  }).then(response =>  response.json())
+    .then(data => {
+      console.log(data);
+      return data;
+    })
+    .catch(e => console.error(e))
 }
 
 function from(string){
