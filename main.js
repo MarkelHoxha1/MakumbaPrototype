@@ -9,17 +9,15 @@ class Query{
             parentIndex: globalIndex - 1,
             limit: -1,
             offset: 0,
-          }
+          };
           whereQuery = string;
         return new Query(this.q + string);
     }
 
-    map(func){
-      //return new Promise((resolve) => {
-          var returnValue = func(closure, -1);
-          console.log(returnValue);
-          //resolve(queries);
-     // });
+   async map(func){
+        func(closure, -1);
+        await runQueries(queries);
+        console.log(resultFromAPI);
    }
     
     groupBy(string){ 
@@ -29,7 +27,7 @@ class Query{
             parentIndex: globalIndex - 1,
             limit: -1,
             offset: 0,
-          }
+          };
           groupByQuery = string;
         return  new Query(this.q +string);
     }
@@ -40,7 +38,7 @@ class Query{
             parentIndex: globalIndex - 1,
             limit: -1,
             offset: 0,
-          }
+          };
           orderByQuery = string;
         return  new Query(this.q +string);
     }
@@ -54,22 +52,22 @@ function getResults(queries){
 function closure(value){
   console.log(value);
   queries[globalIndex].projections.push(value);
-  return getResults(queries);
+  //return queries;
   //return { val: value, index: globalIndex };
 }
 
-function runQueries(queriesCreated){
+async function runQueries(queriesCreated){
   console.log(queriesCreated);
-  fetch("https://brfenergi.se/task-planner/MakumbaQueryServlet", {
+  await fetch("https://brfenergi.se/task-planner/MakumbaQueryServlet", {
     method: "POST",
     credentials: 'include',
     body: "request=" + encodeURIComponent(JSON.stringify({ queries: queriesCreated })) + "&analyzeOnly=false"
   }).then(response =>  response.json())
     .then(data => {
       console.log(data);
-      return data;
+      resultFromAPI = data;
     })
-    .catch(e => console.error(e))
+    .catch(e => console.error(e));
 }
 
 function from(string){
@@ -79,13 +77,30 @@ function from(string){
         parentIndex: globalIndex,
         limit: -1,
         offset: 0,
-      }
+      };
       globalIndex ++;
     return new Query(string);
 }
+
+// // return objects
+// from("ProductionLine line").map(
+//   data=>
+// ({
+//     lineName: data("line.name"),
+//     tasks: data.from("Task t").where("t.line=line").map(
+//   data=>
+//       ({
+//     customerName:data("t.customer"),
+//     days:data("t.days"),
+//       }))
+// }))
+
 
 let globalIndex = -1;
 let queries = [];
 let whereQuery = undefined;
 let groupByQuery = undefined;
 let orderByQuery = undefined;
+let dirty = true;
+let firstMap = false;
+let resultFromAPI;
